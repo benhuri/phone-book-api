@@ -1,28 +1,26 @@
 version: '3.8'
 
 services:
-  phonebook-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    environment:
-      - DATABASE_URL=postgres://user:password@postgres:5432/phonebook?sslmode=disable
-
-  postgres:
+  db:
     image: postgres:13
-    restart: always
     environment:
-      POSTGRES_DB: phonebook
-      POSTGRES_USER: user
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: phonebook
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    command: ["go", "run", "cmd/main.go"]
+    environment:
+      DB_CONNECTION_STRING: "postgres://postgres:password@db/phonebook?sslmode=disable"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
 
 volumes:
-  postgres_data:
+  db_data:

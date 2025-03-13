@@ -10,11 +10,11 @@ import (
 func NewRouter(contactHandler *contacts.Handler) *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/contacts", contactHandler.GetContacts).Methods(http.MethodGet)
-	router.HandleFunc("/contacts/search", contactHandler.SearchContact).Methods(http.MethodGet)
-	router.HandleFunc("/contacts", contactHandler.AddContact).Methods(http.MethodPost)
-	router.HandleFunc("/contacts/{id}", contactHandler.EditContact).Methods(http.MethodPut)
-	router.HandleFunc("/contacts/{id}", contactHandler.DeleteContact).Methods(http.MethodDelete)
+	router.HandleFunc("/contacts", contactHandler.GetContactsHandler).Methods(http.MethodGet)
+	router.HandleFunc("/contacts/search", contactHandler.SearchContactHandler).Methods(http.MethodGet)
+	router.HandleFunc("/contacts", contactHandler.AddContactHandler).Methods(http.MethodPost)
+	router.HandleFunc("/contacts/{id}", contactHandler.EditContactHandler).Methods(http.MethodPut)
+	router.HandleFunc("/contacts/{id}", contactHandler.DeleteContactHandler).Methods(http.MethodDelete)
 
 	return router
 }

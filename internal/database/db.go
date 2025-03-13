@@ -1,38 +1,26 @@
 package database
 
 import (
-    "database/sql"
-    "log"
+	"database/sql"
+	"log"
 
-    _ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-var db *sql.DB
+var DB *sql.DB
 
 // InitDB initializes the database connection
-func InitDB(dataSourceName string) {
-    var err error
-    db, err = sql.Open("postgres", dataSourceName)
-    if err != nil {
-        log.Fatalf("Error opening database: %v", err)
-    }
+func InitDB(dataSourceName string) error {
+	var err error
+	DB, err = sql.Open("postgres", dataSourceName)
+	if err != nil {
+		return err
+	}
 
-    if err = db.Ping(); err != nil {
-        log.Fatalf("Error connecting to the database: %v", err)
-    }
+	if err := DB.Ping(); err != nil {
+		return err
+	}
 
-    log.Println("Database connection established")
-}
-
-// GetDB returns the database connection
-func GetDB() *sql.DB {
-    return db
-}
-
-// CloseDB closes the database connection
-func CloseDB() {
-    if err := db.Close(); err != nil {
-        log.Fatalf("Error closing database: %v", err)
-    }
-    log.Println("Database connection closed")
+	log.Println("Connected to the database successfully")
+	return nil
 }

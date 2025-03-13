@@ -1,4 +1,4 @@
-FROM golang:1.20 AS builder
+FROM golang:1.18-alpine
 
 WORKDIR /app
 
@@ -7,12 +7,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o phone-book-api ./cmd/main.go
+RUN go build -o /phone-book-api cmd/main.go
 
-FROM alpine:latest
+EXPOSE 8080
 
-WORKDIR /root/
-
-COPY --from=builder /app/phone-book-api .
-
-CMD ["./phone-book-api"]
+CMD ["/phone-book-api"]

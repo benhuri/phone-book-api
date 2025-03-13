@@ -16,14 +16,20 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
 }
 
-func (h *Handler) GetContacts(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetContactsHandler(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
 		page = 1
 	}
 
-	contacts, err := h.Service.GetContacts(page)
+	limitStr := r.URL.Query().Get("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10 // default limit
+	}
+
+	contacts, err := h.Service.GetContacts(page, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -33,7 +39,7 @@ func (h *Handler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(contacts)
 }
 
-func (h *Handler) SearchContact(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SearchContactHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
 	contacts, err := h.Service.SearchContact(query)
 	if err != nil {
@@ -45,14 +51,14 @@ func (h *Handler) SearchContact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(contacts)
 }
 
-func (h *Handler) AddContact(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AddContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Service.AddContact(&contact); err != nil {
+	if err := h.Service.AddContact(contact); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -61,15 +67,22 @@ func (h *Handler) AddContact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(contact)
 }
 
-func (h *Handler) EditContact(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) EditContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	id := mux.Vars(r)["id"]
-	if err := h.Service.EditContact(id, &contact); err != nil {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid contact ID", http.StatusBadRequest)
+		return
+	}
+	contact.ID = id
+
+	if err := h.Service.EditContact(contact); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -78,8 +91,14 @@ func (h *Handler) EditContact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(contact)
 }
 
-func (h *Handler) DeleteContact(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+func (h *Handler) DeleteContactHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid contact ID", http.StatusBadRequest)
+		return
+	}
+
 	if err := h.Service.DeleteContact(id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

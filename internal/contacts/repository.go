@@ -7,23 +7,23 @@ import (
 )
 
 type Repository interface {
-	GetContacts(ctx context.Context, limit, offset int) ([]Contact, error)
-	SearchContact(ctx context.Context, query string) ([]Contact, error)
-	AddContact(ctx context.Context, contact Contact) error
+	FetchContacts(ctx context.Context, limit, offset int) ([]Contact, error)
+	FindContact(ctx context.Context, query string) ([]Contact, error)
+	CreateContact(ctx context.Context, contact Contact) error
 	UpdateContact(ctx context.Context, contact Contact) error
-	DeleteContact(ctx context.Context, id int) error
+	RemoveContact(ctx context.Context, id int) error
 }
 
-type repository struct {
+type contactRepository struct {
 	db *sql.DB
 }
 
 func NewRepository(db *sql.DB) Repository {
-	return &repository{db: db}
+	return &contactRepository{db: db}
 }
 
-func (r *repository) GetContacts(ctx context.Context, limit, offset int) ([]Contact, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts LIMIT ? OFFSET ?", limit, offset)
+func (r *contactRepository) FetchContacts(ctx context.Context, limit, offset int) ([]Contact, error) {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +45,8 @@ func (r *repository) GetContacts(ctx context.Context, limit, offset int) ([]Cont
 	return contacts, nil
 }
 
-func (r *repository) SearchContact(ctx context.Context, query string) ([]Contact, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts WHERE first_name LIKE ? OR last_name LIKE ?", "%"+query+"%", "%"+query+"%")
+func (r *contactRepository) FindContact(ctx context.Context, query string) ([]Contact, error) {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts WHERE first_name LIKE $1 OR last_name LIKE $2", "%"+query+"%", "%"+query+"%")
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +68,13 @@ func (r *repository) SearchContact(ctx context.Context, query string) ([]Contact
 	return contacts, nil
 }
 
-func (r *repository) AddContact(ctx context.Context, contact Contact) error {
-	_, err := r.db.ExecContext(ctx, "INSERT INTO contacts (first_name, last_name, phone_number, address) VALUES (?, ?, ?, ?)", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address)
+func (r *contactRepository) CreateContact(ctx context.Context, contact Contact) error {
+	_, err := r.db.ExecContext(ctx, "INSERT INTO contacts (first_name, last_name, phone_number, address) VALUES ($1, $2, $3, $4)", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address)
 	return err
 }
 
-func (r *repository) UpdateContact(ctx context.Context, contact Contact) error {
-	result, err := r.db.ExecContext(ctx, "UPDATE contacts SET first_name = ?, last_name = ?, phone_number = ?, address = ? WHERE id = ?", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address, contact.ID)
+func (r *contactRepository) UpdateContact(ctx context.Context, contact Contact) error {
+	result, err := r.db.ExecContext(ctx, "UPDATE contacts SET first_name = $1, last_name = $2, phone_number = $3, address = $4 WHERE id = $5", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address, contact.ID)
 	if err != nil {
 		return err
 	}
@@ -88,8 +88,8 @@ func (r *repository) UpdateContact(ctx context.Context, contact Contact) error {
 	return nil
 }
 
-func (r *repository) DeleteContact(ctx context.Context, id int) error {
-	result, err := r.db.ExecContext(ctx, "DELETE FROM contacts WHERE id = ?", id)
+func (r *contactRepository) RemoveContact(ctx context.Context, id int) error {
+	result, err := r.db.ExecContext(ctx, "DELETE FROM contacts WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
