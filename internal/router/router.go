@@ -3,8 +3,8 @@ package router
 import (
 	"net/http"
 
+	"github.com/benhuri/phone-book-api/internal/contacts"
 	"github.com/gorilla/mux"
-	"github.com/yourusername/phone-book-api/internal/contacts"
 )
 
 func NewRouter(contactHandler *contacts.Handler) *mux.Router {
