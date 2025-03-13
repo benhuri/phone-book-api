@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -11,29 +12,32 @@ import (
 )
 
 func main() {
-	// Get the database connection string from environment variables
-	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
-	if dbConnStr == "" {
-		log.Fatal("DB_CONNECTION_STRING environment variable is required")
-	}
+	// Set the database connection string
+	os.Setenv("DB_CONNECTION_STRING", "postgres://postgres:03051991@localhost/phonebook?sslmode=disable")
+	database.InitDB(os.Getenv("DB_CONNECTION_STRING")) // Assuming this initializes the database connection
 
-	// Initialize the database
-	if err := database.InitDB(dbConnStr); err != nil {
-		log.Fatalf("Could not connect to the database: %v", err)
+	// Create the contacts table if it doesn't exist
+	createTableQuery := `
+	CREATE TABLE IF NOT EXISTS contacts (
+		id SERIAL PRIMARY KEY,
+		first_name VARCHAR(50),
+		last_name VARCHAR(50),
+		phone_number VARCHAR(20),
+		address VARCHAR(100)
+	);`
+	_, err := database.DB.ExecContext(context.Background(), createTableQuery)
+	if err != nil {
+		log.Fatalf("Error creating contacts table: %v", err)
 	}
-	defer database.DB.Close()
 
 	// Initialize the contacts repository, service, and handler
 	contactsRepo := contacts.NewRepository(database.DB)
 	contactsService := contacts.NewService(contactsRepo)
-	contactsHandler := contacts.NewHandler(contactsService)
+	contactHandler := contacts.NewHandler(contactsService)
 
-	// Set up the router
-	r := router.NewRouter(contactsHandler)
+	// Initialize the router
+	r := router.NewRouter(contactHandler)
 
-	// Start the HTTP server
-	log.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatalf("Could not start server: %v", err)
-	}
+	// Start the server
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
