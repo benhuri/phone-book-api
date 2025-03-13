@@ -2,6 +2,7 @@ package contacts
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -31,6 +32,7 @@ func (h *Handler) GetContactsHandler(w http.ResponseWriter, r *http.Request) {
 
 	contacts, err := h.Service.GetContacts(page, limit)
 	if err != nil {
+		log.Printf("Error getting contacts: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -43,6 +45,7 @@ func (h *Handler) SearchContactHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
 	contacts, err := h.Service.SearchContact(query)
 	if err != nil {
+		log.Printf("Error searching contacts: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -54,11 +57,13 @@ func (h *Handler) SearchContactHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
+		log.Printf("Error decoding contact: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Service.AddContact(contact); err != nil {
+	if err := h.Service.AddContact(&contact); err != nil {
+		log.Printf("Error adding contact: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -70,6 +75,7 @@ func (h *Handler) AddContactHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) EditContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
+		log.Printf("Error decoding contact: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -77,12 +83,14 @@ func (h *Handler) EditContactHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
+		log.Printf("Invalid contact ID: %v", err)
 		http.Error(w, "Invalid contact ID", http.StatusBadRequest)
 		return
 	}
 	contact.ID = id
 
 	if err := h.Service.EditContact(contact); err != nil {
+		log.Printf("Error editing contact: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -95,11 +103,13 @@ func (h *Handler) DeleteContactHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
+		log.Printf("Invalid contact ID: %v", err)
 		http.Error(w, "Invalid contact ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.Service.DeleteContact(id); err != nil {
+		log.Printf("Error deleting contact: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

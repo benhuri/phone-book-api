@@ -9,7 +9,7 @@ import (
 type Repository interface {
 	FetchContacts(ctx context.Context, limit, offset int) ([]Contact, error)
 	FindContact(ctx context.Context, query string) ([]Contact, error)
-	CreateContact(ctx context.Context, contact Contact) error
+	CreateContact(ctx context.Context, contact *Contact) error
 	UpdateContact(ctx context.Context, contact Contact) error
 	RemoveContact(ctx context.Context, id int) error
 }
@@ -68,8 +68,8 @@ func (r *contactRepository) FindContact(ctx context.Context, query string) ([]Co
 	return contacts, nil
 }
 
-func (r *contactRepository) CreateContact(ctx context.Context, contact Contact) error {
-	_, err := r.db.ExecContext(ctx, "INSERT INTO contacts (first_name, last_name, phone_number, address) VALUES ($1, $2, $3, $4)", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address)
+func (r *contactRepository) CreateContact(ctx context.Context, contact *Contact) error {
+	err := r.db.QueryRowContext(ctx, "INSERT INTO contacts (first_name, last_name, phone_number, address) VALUES ($1, $2, $3, $4) RETURNING id", contact.FirstName, contact.LastName, contact.PhoneNumber, contact.Address).Scan(&contact.ID)
 	return err
 }
 
