@@ -23,8 +23,29 @@ var testContact contacts.Contact
 
 func setup() {
 	// Set the database connection string for testing
-	os.Setenv("DB_CONNECTION_STRING", "postgres://postgres:03051991@localhost/phonebook?sslmode=disable")
-	database.InitDB(os.Getenv("DB_CONNECTION_STRING")) // Assuming this initializes the database connection
+	dbUser := os.Getenv("POSTGRES_USER")
+	if dbUser == "" {
+		dbUser = "postgres"
+	}
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "03051991"
+	}
+	dbName := os.Getenv("POSTGRES_DB")
+	if dbName == "" {
+		dbName = "phonebook"
+	}
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	dbPort := os.Getenv("DB_PORT")
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
+	os.Setenv("DB_CONNECTION_STRING", connectionString)
+	database.InitDB(connectionString) // Assuming this initializes the database connection
 
 	// Create the contacts table if it doesn't exist
 	createTableQuery := `
