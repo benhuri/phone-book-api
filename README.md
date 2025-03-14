@@ -35,6 +35,13 @@ phone-book-api
 └── go.sum                    # Checksums for module dependencies
 ```
 
+## Prerequisites
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Go](https://golang.org/dl/) (if you want to run the application locally without Docker)
+- PostgreSQL database (if running locally without Docker)
+
+
 ## Setup Instructions
 1. **Clone the repository:**
    ```sh
