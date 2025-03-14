@@ -5,22 +5,27 @@ services:
     image: postgres:13
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: 03051991
       POSTGRES_DB: phonebook
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
-    command: ["go", "run", "cmd/main.go"]
     environment:
-      DB_CONNECTION_STRING: "postgres://postgres:password@db/phonebook?sslmode=disable"
+      DB_CONNECTION_STRING: "postgres://postgres:03051991@db:5432/phonebook?sslmode=disable"
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:

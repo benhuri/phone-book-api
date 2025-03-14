@@ -12,19 +12,18 @@ import (
 )
 
 func main() {
-	// Set the database connection string
-	os.Setenv("DB_CONNECTION_STRING", "postgres://postgres:03051991@localhost/phonebook?sslmode=disable")
+	// Initialize the database connection
 	database.InitDB(os.Getenv("DB_CONNECTION_STRING")) // Assuming this initializes the database connection
 
 	// Create the contacts table if it doesn't exist
 	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS contacts (
-		id SERIAL PRIMARY KEY,
-		first_name VARCHAR(50),
-		last_name VARCHAR(50),
-		phone_number VARCHAR(20),
-		address VARCHAR(100)
-	);`
+    CREATE TABLE IF NOT EXISTS contacts (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        phone_number VARCHAR(20),
+        address VARCHAR(100)
+    );`
 	_, err := database.DB.ExecContext(context.Background(), createTableQuery)
 	if err != nil {
 		log.Fatalf("Error creating contacts table: %v", err)
