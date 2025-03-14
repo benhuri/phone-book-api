@@ -46,7 +46,7 @@ func (r *contactRepository) FetchContacts(ctx context.Context, limit, offset int
 }
 
 func (r *contactRepository) FindContact(ctx context.Context, query string) ([]Contact, error) {
-	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts WHERE first_name LIKE $1 OR last_name LIKE $2", "%"+query+"%", "%"+query+"%")
+	rows, err := r.db.QueryContext(ctx, "SELECT id, first_name, last_name, phone_number, address FROM contacts WHERE first_name LIKE $1 OR last_name LIKE $2 OR phone_number LIKE $3", "%"+query+"%", "%"+query+"%", "%"+query+"%")
 	if err != nil {
 		return nil, err
 	}

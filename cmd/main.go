@@ -13,7 +13,10 @@ import (
 
 func main() {
 	// Initialize the database connection
-	database.InitDB(os.Getenv("DB_CONNECTION_STRING")) // Assuming this initializes the database connection
+	err := database.InitDB(os.Getenv("DB_CONNECTION_STRING"))
+	if err != nil {
+		log.Fatalf("Error initializing database: %v", err)
+	}
 
 	// Create the contacts table if it doesn't exist
 	createTableQuery := `
@@ -24,7 +27,7 @@ func main() {
         phone_number VARCHAR(20),
         address VARCHAR(100)
     );`
-	_, err := database.DB.ExecContext(context.Background(), createTableQuery)
+	_, err = database.DB.ExecContext(context.Background(), createTableQuery)
 	if err != nil {
 		log.Fatalf("Error creating contacts table: %v", err)
 	}

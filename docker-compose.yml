@@ -5,7 +5,7 @@ services:
     image: postgres:13
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 03051991
+      POSTGRES_PASSWORD: 123
       POSTGRES_DB: phonebook
     ports:
       - "5432:5432"
@@ -20,7 +20,7 @@ services:
   app:
     build: .
     environment:
-      DB_CONNECTION_STRING: "postgres://postgres:03051991@db:5432/phonebook?sslmode=disable"
+      DB_CONNECTION_STRING: "postgres://postgres:123@db:5432/phonebook?sslmode=disable"
     ports:
       - "8080:8080"
     depends_on:
