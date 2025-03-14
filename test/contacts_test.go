@@ -29,7 +29,7 @@ func setup() {
 	}
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 	if dbPassword == "" {
-		dbPassword = "03051991"
+		dbPassword = "03051991" //kept the password for tetsing, but should be removed in a production environment.
 	}
 	dbName := os.Getenv("POSTGRES_DB")
 	if dbName == "" {
