@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
@@ -15,6 +16,12 @@ type Handler struct {
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
+}
+
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
 }
 
 func (h *Handler) GetContactsHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +65,13 @@ func (h *Handler) AddContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
 		log.Printf("Error decoding contact: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := validate.Struct(contact); err != nil {
+		log.Printf("Validation error: %v", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
@@ -76,7 +89,13 @@ func (h *Handler) EditContactHandler(w http.ResponseWriter, r *http.Request) {
 	var contact Contact
 	if err := json.NewDecoder(r.Body).Decode(&contact); err != nil {
 		log.Printf("Error decoding contact: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := validate.Struct(contact); err != nil {
+		log.Printf("Validation error: %v", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 

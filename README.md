@@ -50,6 +50,11 @@ phone-book-api
 3. **Access the API:**
    The API will be available at `http://localhost:8080`.
 
+4. **Run the application locally:**
+   ```
+   go run main.go
+   ```
+
 ## API Documentation
 ### Endpoints
 - **GET /contacts**: Retrieve a list of contacts (supports pagination).
