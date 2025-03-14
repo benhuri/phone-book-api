@@ -83,6 +83,13 @@ func teardown() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Reset the ID sequence
+	resetSequenceQuery := `ALTER SEQUENCE contacts_id_seq RESTART WITH 1`
+	_, err = database.DB.ExecContext(context.Background(), resetSequenceQuery)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestMain(m *testing.M) {
@@ -229,9 +236,6 @@ func TestDeleteContact(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Print the captured contact
-	fmt.Println("Created contact:", createdContact)
 
 	// Delete the contact
 	req, err = http.NewRequest("DELETE", "/contacts/"+strconv.Itoa(createdContact.ID), nil)
