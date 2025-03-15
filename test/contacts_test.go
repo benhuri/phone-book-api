@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,7 +13,23 @@ import (
 	"github.com/benhuri/phone-book-api/internal/contacts"
 	"github.com/benhuri/phone-book-api/internal/database"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	contentType         = "Content-Type"
+	applicationJSON     = "application/json"
+	basePath            = "/contacts"
+	contactsPath        = basePath
+	contactsSearchPath  = basePath + "/search"
+	contactIDPath       = basePath + "/{id}"
+	pageParam           = "page"
+	limitParam          = "limit"
+	queryParam          = "query"
+	invalidRequestError = "Invalid request payload"
+	invalidContactID    = "Invalid contact ID"
+	internalServerError = "Internal Server Error"
 )
 
 var contactHandler *contacts.Handler
@@ -22,30 +37,8 @@ var router *mux.Router
 var testContact contacts.Contact
 
 func setup() {
-	// Set the database connection string for testing
-	dbUser := os.Getenv("POSTGRES_USER")
-	if dbUser == "" {
-		dbUser = "postgres"
-	}
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
-	if dbPassword == "" {
-		dbPassword = "123" //kept the password for tetsing, but should be removed in a production environment.
-	}
-	dbName := os.Getenv("POSTGRES_DB")
-	if dbName == "" {
-		dbName = "phonebook"
-	}
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		dbHost = "localhost"
-	}
-	dbPort := os.Getenv("DB_PORT")
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
-	os.Setenv("DB_CONNECTION_STRING", connectionString)
-	database.InitDB(connectionString) // Assuming this initializes the database connection
+	logrus.Info("Setting up the test environment")
+	database.InitDB()
 
 	// Create the contacts table if it doesn't exist
 	createTableQuery := `
@@ -58,7 +51,7 @@ func setup() {
 	);`
 	_, err := database.DB.ExecContext(context.Background(), createTableQuery)
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Failed to create contacts table: %v", err)
 	}
 
 	// Initialize the contacts repository, service, and handler
@@ -68,11 +61,11 @@ func setup() {
 
 	// Initialize the router
 	router = mux.NewRouter()
-	router.HandleFunc("/contacts", contactHandler.AddContactHandler).Methods("POST")
-	router.HandleFunc("/contacts", contactHandler.GetContactsHandler).Methods("GET")
-	router.HandleFunc("/contacts/search", contactHandler.SearchContactHandler).Methods("GET")
-	router.HandleFunc("/contacts/{id}", contactHandler.EditContactHandler).Methods("PUT")
-	router.HandleFunc("/contacts/{id}", contactHandler.DeleteContactHandler).Methods("DELETE")
+	router.HandleFunc(contactsPath, contactHandler.AddContactHandler).Methods("POST")
+	router.HandleFunc(contactsPath, contactHandler.GetContactsHandler).Methods("GET")
+	router.HandleFunc(contactsSearchPath, contactHandler.SearchContactHandler).Methods("GET")
+	router.HandleFunc(contactIDPath, contactHandler.EditContactHandler).Methods("PUT")
+	router.HandleFunc(contactIDPath, contactHandler.DeleteContactHandler).Methods("DELETE")
 
 	// Create a test contact
 	testContact = contacts.Contact{
@@ -82,34 +75,35 @@ func setup() {
 		Address:     "123 Main St",
 	}
 	body, _ := json.Marshal(testContact)
-	req, err := http.NewRequest("POST", "/contacts", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", contactsPath, bytes.NewBuffer(body))
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Failed to create test contact: %v", err)
 	}
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	if rr.Code != http.StatusCreated {
-		panic(fmt.Sprintf("Failed to create test contact: %v", rr.Body.String()))
+		logrus.Fatalf("Failed to create test contact: %v", rr.Body.String())
 	}
 	err = json.NewDecoder(rr.Body).Decode(&testContact)
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Failed to decode test contact: %v", err)
 	}
 }
 
 func teardown() {
+	logrus.Info("Tearing down the test environment")
 	// Delete all test data
 	deleteQuery := `DELETE FROM contacts`
 	_, err := database.DB.ExecContext(context.Background(), deleteQuery)
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Failed to delete test data: %v", err)
 	}
 
 	// Reset the ID sequence
 	resetSequenceQuery := `ALTER SEQUENCE contacts_id_seq RESTART WITH 1`
 	_, err = database.DB.ExecContext(context.Background(), resetSequenceQuery)
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("Failed to reset ID sequence: %v", err)
 	}
 }
 
@@ -121,6 +115,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestAddContact(t *testing.T) {
+	logrus.Info("Running TestAddContact")
 	contact := contacts.Contact{
 		FirstName:   "Jane",
 		LastName:    "Smith",
@@ -129,7 +124,7 @@ func TestAddContact(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(contact)
-	req, err := http.NewRequest("POST", "/contacts", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", contactsPath, bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,11 +147,12 @@ func TestAddContact(t *testing.T) {
 	assert.Equal(t, contact.Address, createdContact.Address)
 
 	// Print the returned JSON
-	fmt.Println("AddContact response:", rr.Body.String())
+	logrus.Infof("AddContact response: %v", rr.Body.String())
 }
 
 func TestGetContacts(t *testing.T) {
-	req, err := http.NewRequest("GET", "/contacts?page=1&limit=10", nil)
+	logrus.Info("Running TestGetContacts")
+	req, err := http.NewRequest("GET", contactsPath+"?page=1&limit=10", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,8 +173,9 @@ func TestGetContacts(t *testing.T) {
 }
 
 func TestSearchContact(t *testing.T) {
+	logrus.Info("Running TestSearchContact")
 	// Search for the test contact
-	req, err := http.NewRequest("GET", "/contacts/search?query=John", nil)
+	req, err := http.NewRequest("GET", contactsSearchPath+"?query=John", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,6 +200,7 @@ func TestSearchContact(t *testing.T) {
 }
 
 func TestEditContact(t *testing.T) {
+	logrus.Info("Running TestEditContact")
 	// Edit the test contact
 	contact := contacts.Contact{
 		FirstName:   "Jane",
@@ -211,7 +209,7 @@ func TestEditContact(t *testing.T) {
 		Address:     "456 Elm St",
 	}
 	body, _ := json.Marshal(contact)
-	req, err := http.NewRequest("PUT", "/contacts/"+strconv.Itoa(testContact.ID), bytes.NewBuffer(body))
+	req, err := http.NewRequest("PUT", contactsPath+"/"+strconv.Itoa(testContact.ID), bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,6 +233,7 @@ func TestEditContact(t *testing.T) {
 }
 
 func TestDeleteContact(t *testing.T) {
+	logrus.Info("Running TestDeleteContact")
 	// Add a contact to delete
 	contact := contacts.Contact{
 		FirstName:   "Mark",
@@ -243,7 +242,7 @@ func TestDeleteContact(t *testing.T) {
 		Address:     "789 Oak St",
 	}
 	body, _ := json.Marshal(contact)
-	req, err := http.NewRequest("POST", "/contacts", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", contactsPath, bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,7 +258,7 @@ func TestDeleteContact(t *testing.T) {
 	}
 
 	// Delete the contact
-	req, err = http.NewRequest("DELETE", "/contacts/"+strconv.Itoa(createdContact.ID), nil)
+	req, err = http.NewRequest("DELETE", contactsPath+"/"+strconv.Itoa(createdContact.ID), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,7 +269,7 @@ func TestDeleteContact(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 
 	// Verify the contact was deleted by searching for it
-	req, err = http.NewRequest("GET", "/contacts/search?query="+createdContact.FirstName, nil)
+	req, err = http.NewRequest("GET", contactsSearchPath+"?query="+createdContact.FirstName, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

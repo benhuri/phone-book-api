@@ -1,20 +1,23 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/benhuri/phone-book-api/internal/contacts"
 	"github.com/gorilla/mux"
 )
 
-func NewRouter(contactHandler *contacts.Handler) *mux.Router {
-	router := mux.NewRouter()
+const (
+	basePath           = "/contacts"
+	contactsPath       = basePath
+	contactsSearchPath = basePath + "/search"
+	contactIDPath      = basePath + "/{id}"
+)
 
-	router.HandleFunc("/contacts", contactHandler.GetContactsHandler).Methods(http.MethodGet)
-	router.HandleFunc("/contacts/search", contactHandler.SearchContactHandler).Methods(http.MethodGet)
-	router.HandleFunc("/contacts", contactHandler.AddContactHandler).Methods(http.MethodPost)
-	router.HandleFunc("/contacts/{id}", contactHandler.EditContactHandler).Methods(http.MethodPut)
-	router.HandleFunc("/contacts/{id}", contactHandler.DeleteContactHandler).Methods(http.MethodDelete)
-
-	return router
+func NewRouter(handler *contacts.Handler) *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc(contactsPath, handler.AddContactHandler).Methods("POST")
+	r.HandleFunc(contactsPath, handler.GetContactsHandler).Methods("GET")
+	r.HandleFunc(contactsSearchPath, handler.SearchContactHandler).Methods("GET")
+	r.HandleFunc(contactIDPath, handler.EditContactHandler).Methods("PUT")
+	r.HandleFunc(contactIDPath, handler.DeleteContactHandler).Methods("DELETE")
+	return r
 }

@@ -2,25 +2,31 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
-	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/benhuri/phone-book-api/internal/config"
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
-// InitDB initializes the database connection
-func InitDB(dataSourceName string) error {
+func InitDB() {
+	config.InitConfig()
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.AppConfig.DBUser,
+		config.AppConfig.DBPassword,
+		config.AppConfig.DBHost,
+		config.AppConfig.DBPort,
+		config.AppConfig.DBName,
+	)
 	var err error
-	DB, err = sql.Open("postgres", dataSourceName)
+	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		return err
+		log.Fatalf("Error opening database: %v", err)
 	}
 
-	if err := DB.Ping(); err != nil {
-		return err
+	if err = DB.Ping(); err != nil {
+		log.Fatalf("Error connecting to the database: %v", err)
 	}
-
-	log.Println("Connected to the database successfully")
-	return nil
 }
