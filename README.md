@@ -227,6 +227,3 @@ go test ./test
 
 ## Metrics
 The application includes metrics collection to monitor API usage and performance. Metrics can be accessed through the designated endpoint.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
