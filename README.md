@@ -21,6 +21,8 @@ phone-book-api
 │   │   ├── model.go          # Defines the Contact struct
 │   │   ├── repository.go     # Data access layer for contacts
 │   │   └── service.go        # Business logic for handling contacts
+│   ├── config
+│   │   └── config.go         # Configuration setup
 │   ├── database
 │   │   └── db.go             # Database connection and setup
 │   ├── metrics
@@ -41,7 +43,6 @@ phone-book-api
 - [Go](https://golang.org/dl/) (if you want to run the application locally without Docker)
 - PostgreSQL database (if running locally without Docker)
 
-
 ## Setup Instructions
 1. **Clone the repository:**
    ```sh
@@ -61,6 +62,63 @@ phone-book-api
    ```sh
    go run cmd/main.go
    ```
+
+## Configuration
+
+### User Credentials
+User credentials and other configuration settings can be specified in the `config.yaml` file or as environment variables.
+
+#### `config.yaml` File
+The `config.yaml` file should be located in the root of the project directory. Here is an example configuration:
+
+```yaml
+DB_USER: postgres
+DB_PASSWORD: "123"
+DB_NAME: phonebook
+DB_HOST: localhost
+DB_PORT: 5432
+```
+
+#### Environment Variables
+Alternatively, you can set the following environment variables:
+
+- `DB_USER`: The database user (e.g., `postgres`)
+- `DB_PASSWORD`: The database password (e.g., `123`)
+- `DB_NAME`: The database name (e.g., `phonebook`)
+- `DB_HOST`: The database host (e.g., `localhost`)
+- `DB_PORT`: The database port (e.g., `5432`)
+
+### Example of Setting Environment Variables
+
+#### On Windows (Command Prompt)
+```sh
+set DB_USER=postgres
+set DB_PASSWORD=123
+set DB_NAME=phonebook
+set DB_HOST=localhost
+set DB_PORT=5432
+go run cmd/main.go
+```
+
+#### On Windows (PowerShell)
+```sh
+$env:DB_USER="postgres"
+$env:DB_PASSWORD="123"
+$env:DB_NAME="phonebook"
+$env:DB_HOST="localhost"
+$env:DB_PORT="5432"
+go run cmd/main.go
+```
+
+#### On Unix-based Systems (Linux, macOS)
+```sh
+export DB_USER=postgres
+export DB_PASSWORD=123
+export DB_NAME=phonebook
+export DB_HOST=localhost
+export DB_PORT=5432
+go run cmd/main.go
+```
 
 ## API Documentation
 
