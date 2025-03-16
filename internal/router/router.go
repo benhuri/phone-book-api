@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/benhuri/phone-book-api/internal/contacts"
+	"github.com/benhuri/phone-book-api/internal/metrics"
 	"github.com/gorilla/mux"
 )
 
@@ -10,6 +11,7 @@ const (
 	contactsPath       = basePath
 	contactsSearchPath = basePath + "/search"
 	contactIDPath      = basePath + "/{id}"
+	metricsPath        = "/metrics"
 )
 
 func NewRouter(handler *contacts.Handler) *mux.Router {
@@ -19,5 +21,6 @@ func NewRouter(handler *contacts.Handler) *mux.Router {
 	r.HandleFunc(contactsSearchPath, handler.SearchContactHandler).Methods("GET")
 	r.HandleFunc(contactIDPath, handler.EditContactHandler).Methods("PUT")
 	r.HandleFunc(contactIDPath, handler.DeleteContactHandler).Methods("DELETE")
+	r.Handle(metricsPath, metrics.MetricsHandler()).Methods("GET")
 	return r
 }

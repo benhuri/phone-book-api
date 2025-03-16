@@ -8,6 +8,7 @@ import (
 	"github.com/benhuri/phone-book-api/internal/config"
 	"github.com/benhuri/phone-book-api/internal/contacts"
 	"github.com/benhuri/phone-book-api/internal/database"
+	"github.com/benhuri/phone-book-api/internal/metrics"
 	"github.com/benhuri/phone-book-api/internal/router"
 )
 
@@ -39,6 +40,9 @@ func main() {
 
 	// Initialize the router
 	r := router.NewRouter(contactHandler)
+
+	// Apply the metrics middleware
+	r.Use(metrics.Middleware)
 
 	// Start the server
 	log.Fatal(http.ListenAndServe(":8080", r))

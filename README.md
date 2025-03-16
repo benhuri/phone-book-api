@@ -227,3 +227,4 @@ go test ./test
 
 ## Metrics
 The application includes metrics collection to monitor API usage and performance. Metrics can be accessed through the designated endpoint.
+http://localhost:8080/metrics
